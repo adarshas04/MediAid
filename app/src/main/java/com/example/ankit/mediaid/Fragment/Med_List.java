@@ -82,7 +82,6 @@ public class Med_List extends Fragment {
                 for (DataSnapshot ds : dataSnapshot.getChildren())
                 {
                     Meds meds=ds.getValue(Meds.class);
-                    Log.i("yo","Qw"+meds);
                     if(meds != null ) {
                         medName.add(meds.getName());
                     }

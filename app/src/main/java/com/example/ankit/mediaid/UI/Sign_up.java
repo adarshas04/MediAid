@@ -70,6 +70,7 @@ public class Sign_up extends AppCompatActivity implements OnMapReadyCallback {
     ImageView userImageProfileView;
     Button b_Signup;
 
+
     DatabaseReference db;
     StorageReference mStorageRef;
 
@@ -121,6 +122,12 @@ public class Sign_up extends AppCompatActivity implements OnMapReadyCallback {
         store_location = findViewById(R.id.store_location);
 
 
+        store_location.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(Sign_up.this, ChooseMap.class));
+            }
+        });
 
         user_type.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override

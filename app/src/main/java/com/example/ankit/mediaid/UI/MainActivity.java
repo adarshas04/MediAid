@@ -67,6 +67,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -97,6 +98,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         progressDialog.setMessage("Loading...");
         progressDialog.show();
 
+
+        Log.i("yo6","qwe1");
         lv = findViewById(R.id.list_view);
         final FloatingActionButton fab =  findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -152,8 +155,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         db.child("user").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                Log.i("yo6",FirebaseAuth.getInstance().getCurrentUser().getUid());
                 User u = dataSnapshot.getValue(User.class);
                 if(u!=null) {
+                   /* if(u.getEmail() != null){}else
+                    {
+                        Log.i("y06", "Ankit");
+                        startActivity(new Intent(MainActivity.this,GoogleSignUp.class));
+                    }*/
                     if (u.getStore_name() != null) {
                         Log.i("ankuryo","1");
                         tabLayout = findViewById(R.id.tabLayout);
@@ -224,6 +233,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
+
+                Log.i("yo6","qwe");
 
             }
         });
@@ -318,7 +329,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Firebase sign out
         mAuth.signOut();
         // Google sign out
-
         mGoogleSignInClient.signOut();
         finish();
         startActivity(new Intent(getBaseContext(), LogInActivity.class));

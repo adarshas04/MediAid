@@ -1,13 +1,7 @@
 package com.example.ankit.mediaid;
 
-import com.bumptech.glide.Glide;
-import com.example.ankit.mediaid.Models.Meds;
-
-import java.util.ArrayList;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,10 +14,9 @@ import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.example.ankit.mediaid.Models.Meds;
 import com.example.ankit.mediaid.Models.Quantity;
-import com.example.ankit.mediaid.UI.Edit_Meds;
-import com.example.ankit.mediaid.UI.MainActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -34,11 +27,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.List;
 
-/*
- * Created by ankit on 3/13/2018.
-*/
-
-public class MyLIstViewAdapter extends ArrayAdapter implements Filterable {
+public class CartListViewAdapter extends ArrayAdapter implements Filterable {
 
     Context _context;
     ArrayList<Meds> med;
@@ -47,8 +36,8 @@ public class MyLIstViewAdapter extends ArrayAdapter implements Filterable {
     private ItemFilter mFilter = new ItemFilter();
 
 
-    public MyLIstViewAdapter(@NonNull Context context, int resource, @NonNull ArrayList objects) {
-        super(context, resource, objects);
+    public CartListViewAdapter(@NonNull Context context, int resource,ArrayList objects) {
+        super(context, resource,objects);
         this._context = context;
         this.med = objects;
         this.filteredData = objects;
@@ -70,17 +59,17 @@ public class MyLIstViewAdapter extends ArrayAdapter implements Filterable {
     @SuppressLint("ViewHolder")
     @NonNull
     @Override
-    public View getView(int i, View v, @NonNull ViewGroup viewGroup) {
+    public View getView(final int i, View v, @NonNull ViewGroup viewGroup) {
         final Meds meds = filteredData.get(i);
         View view;
         LayoutInflater infalInflater = (LayoutInflater) this._context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         view = infalInflater.inflate( this.resource,null,true);
         TextView name = view.findViewById(R.id.name);
         final TextView price = view.findViewById(R.id.price);
-        final TextView quantity = view.findViewById(R.id.quantity);
         final TextView cart_quantity = view.findViewById(R.id.cart_quantity);
         Button add =view.findViewById(R.id.add);
         Button sub = view.findViewById(R.id.sub);
+        Button delete = view.findViewById(R.id.delete);
 
         ImageView image = view.findViewById(R.id.list_image);
         Glide.with(getContext()).load("https://firebasestorage.googleapis.com/v0/b/mediaid-be62a.appspot.com/o/Image%2Fmedia_xll_7501226.png?alt=media&token=e50781ca-c5d1-4c16-89d3-a70228d1b378").into(image);
@@ -88,6 +77,24 @@ public class MyLIstViewAdapter extends ArrayAdapter implements Filterable {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         final String user_id = auth.getCurrentUser().getUid();
         final DatabaseReference db = FirebaseDatabase.getInstance().getReference();
+
+
+        db.child("cart").child(user_id).child(meds.getMed_id()).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Quantity a = dataSnapshot.getValue(Quantity.class);
+                if(a != null)
+                {
+                    if(Integer.parseInt(a.getQuantity()) == 0)
+                        dataSnapshot.getRef().removeValue();
+                    cart_quantity.setText(a.getQuantity());
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+            }
+        });
         db.child("inventory").child(meds.getMed_id()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -95,29 +102,14 @@ public class MyLIstViewAdapter extends ArrayAdapter implements Filterable {
                 for(DataSnapshot ds : dataSnapshot.getChildren()) {
                     Log.i("yoankit"," "+dataSnapshot);
                     Quantity q = ds.getValue(Quantity.class);
-                    if (q != null) {
-                        quantity.setText(q.getQuantity());
-                        price.setText(q.getPrice());
+                    if (q != null) {/*
+                        price.setText(Integer.parseInt(cart_quantity.getText().toString())*(Integer.parseInt(q.getPrice())));
+                    */
+                        Integer p = Integer.parseInt(cart_quantity.getText().toString())*(Integer.parseInt(q.getPrice()));
+                        price.setText(p.toString());
+                        Log.i("ankit2"," "+p);
                     }
                 }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-
-        db.child("cart").child(user_id).child(meds.getMed_id()).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                    Quantity a = dataSnapshot.getValue(Quantity.class);
-                    if(a != null)
-                    {
-                        if(Integer.parseInt(a.getQuantity()) == 0)
-                            dataSnapshot.getRef().removeValue();
-                        cart_quantity.setText(a.getQuantity());
-                    }
             }
 
             @Override
@@ -148,6 +140,32 @@ public class MyLIstViewAdapter extends ArrayAdapter implements Filterable {
                 qw.setQuantity(String.valueOf(a));
                 qw.setPrice(price.getText().toString());
                 db.child("cart").child(user_id).child(meds.getMed_id()).setValue(qw);
+            }
+        });
+        delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String user_id = FirebaseAuth.getInstance().getUid();
+                DatabaseReference db = FirebaseDatabase.getInstance().getReference();
+                Object toRemove = getItem(i);
+                remove(toRemove);
+                db.child("store_inventory").child(user_id).orderByValue().equalTo(meds.getMed_id()).addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for (DataSnapshot ds : dataSnapshot.getChildren())
+                        {
+                            Log.i("yoqw"," " + ds);
+                            ds.getRef().removeValue();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+                db.child("meds").child(meds.getMed_id()).removeValue();
+                db.child("inventory").child(meds.getMed_id()).child(user_id).removeValue();
             }
         });
 
